@@ -1,5 +1,6 @@
 import sys
 from datetime import date, timedelta
+from functools import reduce
 
 import requests
 
@@ -18,13 +19,31 @@ def get_trending_repositories(max_repos):
     return repos
 
 
-def print_repos(repos):
-    for repo in repos:
+def get_open_issues_amount(repo_owner, repo_name):
+    api_url = "https://api.github.com/repos/{}/{}/issues".format(
+        repo_owner, repo_name
+    )
+    params = {"state": "open"}
+    response = requests.get(api_url, params=params)
+    issues = response.json()
+    accumulator_initial_value = 0
+    issues_amount = reduce(
+        lambda accumulator, issue: accumulator + 1
+        if "pull_request" not in issue
+        else accumulator,
+        issues,
+        accumulator_initial_value,
+    )
+    return issues_amount
+
+
+def print_repos(repos_with_issues_amount):
+    for repo, issues_amount in repos_with_issues_amount:
         print(
             "{}: {} stars, {} issue(s) -> {}".format(
                 repo["name"],
                 repo["stargazers_count"],
-                repo["open_issues_count"],
+                issues_amount,
                 repo["html_url"],
             )
         )
@@ -33,6 +52,12 @@ def print_repos(repos):
 if __name__ == "__main__":
     try:
         trending_repos = get_trending_repositories(max_repos=20)
-        print_repos(trending_repos)
+        issues_amounts = [
+            get_open_issues_amount(repo["owner"]["login"], repo["name"])
+            for repo in trending_repos
+        ]
+        repos_with_issues_amount = zip(trending_repos, issues_amounts)
+        print_repos(repos_with_issues_amount)
     except requests.RequestException as error:
+        # TODO handle statuses other than 200
         sys.exit(error)
