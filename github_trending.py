@@ -4,10 +4,12 @@ from functools import reduce
 
 import requests
 
+
 def validate_response(response):
     ok_status_code = 200
     if response.status_code != ok_status_code:
         raise ValueError(response.text)
+
 
 def get_trending_repositories(max_repos):
     api_url = "https://api.github.com/search/repositories"
@@ -31,7 +33,7 @@ def get_open_issues_amount(repo_owner, repo_name):
     params = {"state": "open"}
     response = requests.get(api_url, params=params)
     validate_response(response)
-    
+
     issues = response.json()
     accumulator_initial_value = 0
     issues_amount = reduce(
