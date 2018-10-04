@@ -8,7 +8,10 @@ import requests
 def validate_response(response):
     ok_status_code = 200
     if response.status_code != ok_status_code:
-        raise ValueError(response.text)
+        message = "Server responded with status code {}\n{}".format(
+            response.status_code, response.json().get("message")
+        )
+        raise ValueError(message)
 
 
 def get_trending_repositories(max_repos, since):
