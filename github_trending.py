@@ -11,12 +11,11 @@ def validate_response(response):
         raise ValueError(response.text)
 
 
-def get_trending_repositories(max_repos):
+def get_trending_repositories(max_repos, since):
     api_url = "https://api.github.com/search/repositories"
     headers = {"Accept": "application/vnd.github.v3+json"}
-    week_ago = date.today() - timedelta(weeks=1)
     params = {
-        "q": "created:>={}".format(week_ago.isoformat()),
+        "q": "created:>={}".format(since.isoformat()),
         "sort": "stars",
         "per_page": max_repos,
     }
@@ -60,7 +59,10 @@ def print_repos(repos_with_issues_amount):
 
 if __name__ == "__main__":
     try:
-        trending_repos = get_trending_repositories(max_repos=20)
+        week_ago = date.today() - timedelta(weeks=1)
+        trending_repos = get_trending_repositories(
+            max_repos=20, since=week_ago
+        )
         issues_amounts = [
             get_open_issues_amount(repo["owner"]["login"], repo["name"])
             for repo in trending_repos
